@@ -1,7 +1,9 @@
 package com.tutorial.app.tutorialapp.controller;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import com.tutorial.app.tutorialapp.exception.ResourceNotFoundException;
@@ -9,6 +11,9 @@ import com.tutorial.app.tutorialapp.model.Tutorial;
 import com.tutorial.app.tutorialapp.repository.TutorialRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -31,20 +36,27 @@ public class TutorialController {
     TutorialRepository tutorialRepository;
 
     @GetMapping("/tutorials")
-    public ResponseEntity<List<Tutorial>> getAllTutorials(@RequestParam(required = false) String title) {
+    public ResponseEntity<Map<String, Object>> getAllTutorials(@RequestParam(required = false) String title,
+            @RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "3") int size) {
         try {
             List<Tutorial> tutorials = new ArrayList<Tutorial>();
+            Pageable paging = PageRequest.of(page, size);
 
-            if (title == null)
-                tutorialRepository.findAll().forEach(tutorials::add);
-            else
-                tutorialRepository.findByTitleContaining(title).forEach(tutorials::add);
-
-            if (tutorials.isEmpty()) {
-                return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            Page<Tutorial> pageTuts;
+            if (title == null) {
+                pageTuts = tutorialRepository.findAll(paging);
+            } else {
+                pageTuts = tutorialRepository.findByTitleContainingIgnoreCase(title, paging);
             }
 
-            return new ResponseEntity<>(tutorials, HttpStatus.OK);
+            tutorials = pageTuts.getContent();
+            Map<String, Object> response = new HashMap<>();
+            response.put("tutorials", tutorials);
+            response.put("currentPage", pageTuts.getNumber());
+            response.put("totalItems", pageTuts.getTotalElements());
+            response.put("totalPages", pageTuts.getTotalPages());
+
+            return new ResponseEntity<>(response, HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -57,7 +69,7 @@ public class TutorialController {
         if (tutorialData.isPresent()) {
             return new ResponseEntity<>(tutorialData.get(), HttpStatus.OK);
         } else {
-            throw(new ResourceNotFoundException("Not found Tutorial with id = " + id));
+            throw (new ResourceNotFoundException("Not found Tutorial with id = " + id));
         }
     }
 
@@ -73,14 +85,28 @@ public class TutorialController {
     }
 
     @GetMapping("/tutorials/published")
-    public ResponseEntity<List<Tutorial>> findByPublished() {
+    public ResponseEntity<Map<String, Object>> findByPublished(@RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "3") int size) {
         try {
-            List<Tutorial> tutorials = tutorialRepository.findByPublished(true);
+            List<Tutorial> tutorials = new ArrayList<Tutorial>();
+            Pageable paging = PageRequest.of(page, size);
+
+            Page<Tutorial> pageTuts = tutorialRepository.findByPublished(true, paging);
+
+            tutorials = pageTuts.getContent();
 
             if (tutorials.isEmpty()) {
                 return new ResponseEntity<>(HttpStatus.NO_CONTENT);
             }
-            return new ResponseEntity<>(tutorials, HttpStatus.OK);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("tutorials", tutorials);
+            response.put("currentPage", pageTuts.getNumber());
+            response.put("totalItems", pageTuts.getTotalElements());
+            response.put("totalPages", pageTuts.getTotalPages());
+
+            return new ResponseEntity<>(response, HttpStatus.OK);
+
         } catch (Exception e) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -97,7 +123,7 @@ public class TutorialController {
             _tutorial.setPublished(tutorial.isPublished());
             return new ResponseEntity<>(tutorialRepository.save(_tutorial), HttpStatus.OK);
         } else {
-            throw(new ResourceNotFoundException("Not found Tutorial with id = " + id));
+            throw (new ResourceNotFoundException("Not found Tutorial with id = " + id));
         }
     }
 

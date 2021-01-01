@@ -1,13 +1,14 @@
 package com.tutorial.app.tutorialapp.repository;
 
-import java.util.List;
 
 import com.tutorial.app.tutorialapp.model.Tutorial;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 public interface TutorialRepository extends MongoRepository<Tutorial, String> {
-  List<Tutorial> findByTitleContaining(String title);
+  Page<Tutorial> findByPublished(boolean published, Pageable pageable);
 
-  List<Tutorial> findByPublished(boolean published);
+  Page<Tutorial> findByTitleContainingIgnoreCase(String title, Pageable pageable);
 }
