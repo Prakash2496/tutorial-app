@@ -1,4 +1,4 @@
-package com.tutorial.app.tutorialapp.exception;
+package com.tutorial.app.tutorialapp.model;
 
 import java.util.Date;
 
