@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import com.tutorial.app.tutorialapp.exception.ResourceNotFoundException;
 import com.tutorial.app.tutorialapp.model.Tutorial;
 import com.tutorial.app.tutorialapp.repository.TutorialRepository;
 
@@ -56,7 +57,7 @@ public class TutorialController {
         if (tutorialData.isPresent()) {
             return new ResponseEntity<>(tutorialData.get(), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            throw(new ResourceNotFoundException("Not found Tutorial with id = " + id));
         }
     }
 
@@ -96,7 +97,7 @@ public class TutorialController {
             _tutorial.setPublished(tutorial.isPublished());
             return new ResponseEntity<>(tutorialRepository.save(_tutorial), HttpStatus.OK);
         } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            throw(new ResourceNotFoundException("Not found Tutorial with id = " + id));
         }
     }
 
